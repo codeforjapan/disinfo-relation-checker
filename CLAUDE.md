@@ -121,3 +121,73 @@ Follow Test-Driven Development (TDD) practices with Outside-In approach:
 - **Plugin Architecture**: Support for different LLM providers and optimization strategies
 - **Configuration-Driven**: All behavior configurable through files and CLI arguments
 - **Observability**: Comprehensive logging and metrics for all operations
+
+## LLM Provider Configuration
+
+### Factory Pattern Implementation
+Use Factory Pattern with discriminated union for type-safe LLM provider configuration using pydantic-settings.
+
+### Supported Providers:
+1. **MockLLMProvider** (default): Keyword-based heuristic classification
+2. **OllamaProvider**: Local Ollama server integration
+3. **Future providers**: OpenAI, Anthropic, Azure OpenAI, etc.
+
+### Configuration Structure:
+```python
+# Settings using pydantic-settings with discriminated union
+class MockLLMConfig(BaseModel):
+    provider_type: Literal["mock"] = "mock"
+
+class OllamaConfig(BaseModel):
+    provider_type: Literal["ollama"] = "ollama"
+    base_url: str = "http://localhost:11434"
+    model: str = "gemma3n:e4b"
+    timeout: int = 30
+
+LLMConfig = Annotated[Union[MockLLMConfig, OllamaConfig], Field(discriminator="provider_type")]
+```
+
+### Configuration File Example:
+```yaml
+# config.yaml
+llm:
+  provider_type: "ollama"
+  base_url: "http://localhost:11434"
+  model: "gemma3n:e4b"
+  timeout: 60
+```
+
+### Environment Variables:
+```bash
+# For Ollama
+LLM_PROVIDER_TYPE=ollama
+LLM_BASE_URL=http://localhost:11434
+LLM_MODEL=gemma3n:e4b
+LLM_TIMEOUT=60
+
+# For Mock (default)
+LLM_PROVIDER_TYPE=mock
+```
+
+### CLI Integration:
+```bash
+# Use config file
+disinfo-relation-checker classify --config config.yaml --input file.csv --output results.csv
+
+# Use environment variables
+LLM_PROVIDER_TYPE=ollama disinfo-relation-checker validate --labeled-data labeled.csv
+```
+
+### Implementation Requirements:
+1. **LLMProviderFactory**: Create providers based on discriminated config
+2. **Type Safety**: Full type checking for all provider configurations
+3. **Validation**: pydantic validation for all settings
+4. **Error Handling**: Graceful degradation if provider unavailable
+5. **Testing**: Mock all external dependencies in unit tests
+6. **Documentation**: Clear examples for each provider type
+
+### Development Dependencies:
+Add to pyproject.toml dev dependencies:
+- `pydantic-settings>=2.0.0`
+- `httpx>=0.24.0` (for Ollama HTTP client)
+- `pyyaml>=6.0` (for YAML config files)
