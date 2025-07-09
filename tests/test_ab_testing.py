@@ -9,6 +9,7 @@ from disinfo_relation_checker.ab_testing import (
     ABTestConfig,
     ABTestResult,
     ABTestRunner,
+    ABTestStatus,
     TrafficSplitter,
 )
 
@@ -25,7 +26,7 @@ class TestABTestConfig:
             traffic_split=50,
             test_data_path="/tmp/test_data.csv",
             created_at="2025-01-01T00:00:00Z",
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
         assert config.test_name == "prompt_comparison"
@@ -46,7 +47,7 @@ class TestABTestConfig:
                 traffic_split=150,  # Invalid traffic split
                 test_data_path="/tmp/test.csv",
                 created_at="2025-01-01T00:00:00Z",
-                status="active",
+                status=ABTestStatus.ACTIVE,
             )
 
     def test_ab_test_config_serialization(self) -> None:
@@ -58,10 +59,10 @@ class TestABTestConfig:
             traffic_split=50,
             test_data_path="/tmp/test.csv",
             created_at="2025-01-01T00:00:00Z",
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
-        data = config.to_dict()
+        data = config.model_dump()
 
         assert data["test_name"] == "test"
         assert data["model_a"] == "model_a:1.0.0"
@@ -79,7 +80,7 @@ class TestABTestConfig:
             "status": "active",
         }
 
-        config = ABTestConfig.from_dict(data)
+        config = ABTestConfig.model_validate(data)
 
         assert config.test_name == "test"
         assert config.model_a == "model_a:1.0.0"
@@ -140,7 +141,7 @@ class TestABTestResult:
             completed_at="2025-01-01T00:00:00Z",
         )
 
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["test_name"] == "test"
         assert data["model_a_performance"]["accuracy"] == 0.85
@@ -235,7 +236,7 @@ class TestABTestRunner:
             traffic_split=50,
             test_data_path="/tmp/test.csv",
             created_at="2025-01-01T00:00:00Z",
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
         runner.setup_ab_test(config)
@@ -258,7 +259,7 @@ class TestABTestRunner:
             traffic_split=50,
             test_data_path="/tmp/test.csv",
             created_at="2025-01-01T00:00:00Z",
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
         # Mock test data
@@ -316,7 +317,7 @@ class TestABTestRunner:
                 traffic_split=50,
                 test_data_path="/tmp/test1.csv",
                 created_at="2025-01-01T00:00:00Z",
-                status="active",
+                status=ABTestStatus.ACTIVE,
             ),
             ABTestConfig(
                 test_name="test2",
@@ -325,7 +326,7 @@ class TestABTestRunner:
                 traffic_split=70,
                 test_data_path="/tmp/test2.csv",
                 created_at="2025-01-01T00:00:00Z",
-                status="completed",
+                status=ABTestStatus.COMPLETED,
             ),
         ]
 
@@ -349,7 +350,7 @@ class TestABTest:
             traffic_split=50,
             test_data_path="/tmp/test.csv",
             created_at="2025-01-01T00:00:00Z",
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
         result = ABTestResult(
@@ -377,7 +378,7 @@ class TestABTest:
             traffic_split=50,
             test_data_path="/tmp/test.csv",
             created_at="2025-01-01T00:00:00Z",
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
         result_significant = ABTestResult(
@@ -417,7 +418,7 @@ class TestABTest:
             traffic_split=50,
             test_data_path="/tmp/test.csv",
             created_at="2025-01-01T00:00:00Z",
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
         result = ABTestResult(

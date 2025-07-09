@@ -6,7 +6,9 @@ import pytest
 
 from disinfo_relation_checker.performance_monitoring import (
     Alert,
+    AlertCondition,
     AlertRule,
+    AlertSeverity,
     MetricCollector,
     PerformanceMonitor,
     PerformanceRecord,
@@ -93,7 +95,7 @@ class TestPerformanceRecord:
             sample_count=1000,
         )
 
-        data = record.to_dict()
+        data = record.model_dump()
 
         assert data["model_name"] == "test_model"
         assert data["accuracy"] == 0.85
@@ -115,7 +117,7 @@ class TestPerformanceRecord:
             "sample_count": 1000,
         }
 
-        record = PerformanceRecord.from_dict(data)
+        record = PerformanceRecord.model_validate(data)
 
         assert record.model_name == "test_model"
         assert record.accuracy == 0.85
@@ -269,9 +271,9 @@ class TestAlertRule:
             rule_id="accuracy_low",
             model_name="test_model",
             metric_name="accuracy",
-            condition="<",
+            condition=AlertCondition.LESS_THAN,
             threshold=0.80,
-            severity="high",
+            severity=AlertSeverity.HIGH,
             description="Accuracy dropped below 80%",
             enabled=True,
         )
@@ -291,9 +293,9 @@ class TestAlertRule:
             rule_id="accuracy_low",
             model_name="test_model",
             metric_name="accuracy",
-            condition="<",
+            condition=AlertCondition.LESS_THAN,
             threshold=0.80,
-            severity="high",
+            severity=AlertSeverity.HIGH,
             description="Accuracy dropped below 80%",
             enabled=True,
         )
@@ -305,9 +307,9 @@ class TestAlertRule:
             rule_id="latency_high",
             model_name="test_model",
             metric_name="latency_ms",
-            condition=">",
+            condition=AlertCondition.GREATER_THAN,
             threshold=200.0,
-            severity="medium",
+            severity=AlertSeverity.MEDIUM,
             description="Latency exceeds 200ms",
             enabled=True,
         )
@@ -321,14 +323,14 @@ class TestAlertRule:
             rule_id="test_rule",
             model_name="test_model",
             metric_name="accuracy",
-            condition="<",
+            condition=AlertCondition.LESS_THAN,
             threshold=0.80,
-            severity="high",
+            severity=AlertSeverity.HIGH,
             description="Test rule",
             enabled=True,
         )
 
-        data = rule.to_dict()
+        data = rule.model_dump()
 
         assert data["rule_id"] == "test_rule"
         assert data["threshold"] == 0.80
@@ -347,7 +349,7 @@ class TestAlert:
             metric_name="accuracy",
             current_value=0.75,
             threshold=0.80,
-            severity="high",
+            severity=AlertSeverity.HIGH,
             message="Accuracy dropped to 75%",
             triggered_at="2025-01-01T00:00:00Z",
             acknowledged=False,
@@ -373,7 +375,7 @@ class TestAlert:
             metric_name="accuracy",
             current_value=0.75,
             threshold=0.80,
-            severity="high",
+            severity=AlertSeverity.HIGH,
             message="Accuracy dropped to 75%",
             triggered_at="2025-01-01T00:00:00Z",
             acknowledged=False,
@@ -394,13 +396,13 @@ class TestAlert:
             metric_name="accuracy",
             current_value=0.75,
             threshold=0.80,
-            severity="high",
+            severity=AlertSeverity.HIGH,
             message="Test alert",
             triggered_at="2025-01-01T00:00:00Z",
             acknowledged=False,
         )
 
-        data = alert.to_dict()
+        data = alert.model_dump()
 
         assert data["alert_id"] == "alert_001"
         assert data["current_value"] == 0.75
@@ -524,9 +526,9 @@ class TestPerformanceMonitor:
             rule_id="test_rule",
             model_name="test_model",
             metric_name="accuracy",
-            condition="<",
+            condition=AlertCondition.LESS_THAN,
             threshold=0.80,
-            severity="high",
+            severity=AlertSeverity.HIGH,
             description="Test rule",
             enabled=True,
         )
@@ -551,9 +553,9 @@ class TestPerformanceMonitor:
                 rule_id="accuracy_low",
                 model_name="test_model",
                 metric_name="accuracy",
-                condition="<",
+                condition=AlertCondition.LESS_THAN,
                 threshold=0.80,
-                severity="high",
+                severity=AlertSeverity.HIGH,
                 description="Accuracy too low",
                 enabled=True,
             )
@@ -645,7 +647,7 @@ class TestPerformanceMonitor:
                 metric_name="accuracy",
                 current_value=0.75,
                 threshold=0.80,
-                severity="high",
+                severity=AlertSeverity.HIGH,
                 message="Accuracy dropped to 75%",
                 triggered_at="2025-01-01T00:00:00Z",
                 acknowledged=False,

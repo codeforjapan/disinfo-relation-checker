@@ -1,20 +1,20 @@
 """Prompt optimization engine with SOLID design principles."""
 
-from dataclasses import dataclass
 from typing import Any, Protocol
+
+from pydantic import BaseModel, Field
 
 from .classifier import TextClassifier
 
 
-@dataclass
-class PromptCandidate:
+class PromptCandidate(BaseModel):
     """Represents a prompt candidate with performance metrics."""
 
     template: str
-    accuracy: float
-    precision: float
-    recall: float
-    f1: float
+    accuracy: float = Field(ge=0.0, le=1.0)
+    precision: float = Field(ge=0.0, le=1.0)
+    recall: float = Field(ge=0.0, le=1.0)
+    f1: float = Field(ge=0.0, le=1.0)
 
     def __lt__(self, other: "PromptCandidate") -> bool:
         """Compare candidates based on F1 score."""

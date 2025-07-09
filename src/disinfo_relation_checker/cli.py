@@ -9,7 +9,7 @@ from typing import Protocol
 from pydantic import TypeAdapter
 
 from disinfo_relation_checker import __version__
-from disinfo_relation_checker.ab_testing import ABTestConfig, ABTestRunner
+from disinfo_relation_checker.ab_testing import ABTestConfig, ABTestRunner, ABTestStatus
 from disinfo_relation_checker.classifier import TextClassifier
 from disinfo_relation_checker.csv_processor import CsvProcessor
 from disinfo_relation_checker.llm_factory import LLMProviderFactory
@@ -352,7 +352,7 @@ def handle_ab_test_setup_command(args: argparse.Namespace) -> None:
             traffic_split=traffic_split,
             test_data_path=test_data_path,
             created_at=datetime.now(UTC).isoformat(),
-            status="active",
+            status=ABTestStatus.ACTIVE,
         )
 
         # Setup A/B test

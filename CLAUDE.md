@@ -42,6 +42,7 @@ Follow Test-Driven Development (TDD) practices with Outside-In approach:
 - **Test-driven design**: Use unit tests to drive interface design and enforce single responsibility
 - **Dependency Injection**: Structure tests to require dependency injection for better testability
 - **Mocking**: Mock external dependencies and unimplemented modules using pytest-mock during development
+- **Pydantic for Data Models**: Use Pydantic BaseModel instead of dataclasses for all data structures to ensure runtime validation, automatic serialization/deserialization, and better type safety
 
 ## Development Plan
 

@@ -54,7 +54,7 @@ class TestModelMetadata:
             tags=["test"],
         )
 
-        data = metadata.to_dict()
+        data = metadata.model_dump()
 
         assert data["name"] == "test_model"
         assert data["version"] == "1.0.0"
@@ -74,7 +74,7 @@ class TestModelMetadata:
             "tags": ["test"],
         }
 
-        metadata = ModelMetadata.from_dict(data)
+        metadata = ModelMetadata.model_validate(data)
 
         assert metadata.name == "test_model"
         assert metadata.version == "1.0.0"
@@ -94,9 +94,9 @@ class TestModelVersion:
 
     def test_model_version_comparison(self) -> None:
         """Test ModelVersion comparison operations."""
-        v1 = ModelVersion(1, 0, 0)
-        v2 = ModelVersion(1, 0, 1)
-        v3 = ModelVersion(1, 1, 0)
+        v1 = ModelVersion(major=1, minor=0, patch=0)
+        v2 = ModelVersion(major=1, minor=0, patch=1)
+        v3 = ModelVersion(major=1, minor=1, patch=0)
 
         assert v1 < v2
         assert v2 < v3
@@ -105,14 +105,14 @@ class TestModelVersion:
 
     def test_model_version_string_representation(self) -> None:
         """Test ModelVersion string representation."""
-        version = ModelVersion(1, 2, 3)
+        version = ModelVersion(major=1, minor=2, patch=3)
         assert str(version) == "1.2.3"
 
     def test_model_version_equality(self) -> None:
         """Test ModelVersion equality."""
-        v1 = ModelVersion(1, 0, 0)
-        v2 = ModelVersion(1, 0, 0)
-        v3 = ModelVersion(1, 0, 1)
+        v1 = ModelVersion(major=1, minor=0, patch=0)
+        v2 = ModelVersion(major=1, minor=0, patch=0)
+        v3 = ModelVersion(major=1, minor=0, patch=1)
 
         assert v1 == v2
         assert v1 != v3
@@ -319,7 +319,7 @@ class TestPerformanceMetrics:
         """Test PerformanceMetrics serialization to dictionary."""
         metrics = PerformanceMetrics(accuracy=0.85, precision=0.82, recall=0.88, f1=0.85)
 
-        data = metrics.to_dict()
+        data = metrics.model_dump()
 
         assert data["accuracy"] == 0.85
         assert data["precision"] == 0.82
@@ -330,7 +330,7 @@ class TestPerformanceMetrics:
         """Test PerformanceMetrics creation from dictionary."""
         data = {"accuracy": 0.85, "precision": 0.82, "recall": 0.88, "f1": 0.85}
 
-        metrics = PerformanceMetrics.from_dict(data)
+        metrics = PerformanceMetrics.model_validate(data)
 
         assert metrics.accuracy == 0.85
         assert metrics.precision == 0.82

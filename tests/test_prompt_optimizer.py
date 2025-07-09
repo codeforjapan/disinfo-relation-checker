@@ -25,8 +25,8 @@ class TestPromptCandidate:
 
     def test_prompt_candidate_comparison(self) -> None:
         """Test PromptCandidate comparison based on F1 score."""
-        candidate1 = PromptCandidate("Template 1", 0.8, 0.8, 0.8, 0.8)
-        candidate2 = PromptCandidate("Template 2", 0.9, 0.9, 0.9, 0.9)
+        candidate1 = PromptCandidate(template="Template 1", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8)
+        candidate2 = PromptCandidate(template="Template 2", accuracy=0.9, precision=0.9, recall=0.9, f1=0.9)
 
         assert candidate2 > candidate1
         assert candidate1 < candidate2
@@ -34,8 +34,8 @@ class TestPromptCandidate:
 
     def test_prompt_candidate_equality(self) -> None:
         """Test PromptCandidate equality."""
-        candidate1 = PromptCandidate("Template", 0.8, 0.8, 0.8, 0.8)
-        candidate2 = PromptCandidate("Template", 0.8, 0.8, 0.8, 0.8)
+        candidate1 = PromptCandidate(template="Template", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8)
+        candidate2 = PromptCandidate(template="Template", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8)
 
         assert candidate1 == candidate2
 
@@ -130,7 +130,9 @@ class TestPromptOptimizer:
         mock_generator.generate_base_templates.return_value = ["Template 1: {text}", "Template 2: {text}"]
 
         mock_strategy = Mock()
-        mock_strategy.optimize.return_value = PromptCandidate("Best Template: {text}", 0.95, 0.95, 0.95, 0.95)
+        mock_strategy.optimize.return_value = PromptCandidate(
+            template="Best Template: {text}", accuracy=0.95, precision=0.95, recall=0.95, f1=0.95
+        )
 
         mock_metrics = Mock()
         mock_metrics.meets_target_accuracy.return_value = True
@@ -162,7 +164,9 @@ class TestPromptOptimizer:
         mock_generator.generate_base_templates.return_value = ["Template: {text}"]
 
         mock_strategy = Mock()
-        mock_strategy.optimize.return_value = PromptCandidate("Template: {text}", 0.8, 0.8, 0.8, 0.8)
+        mock_strategy.optimize.return_value = PromptCandidate(
+            template="Template: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8
+        )
 
         mock_metrics = Mock()
         mock_metrics.meets_target_accuracy.return_value = False  # Never meets target

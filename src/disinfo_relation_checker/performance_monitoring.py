@@ -1,96 +1,50 @@
 """Performance monitoring system with SOLID design principles."""
 
-import json
 import statistics
 import uuid
-from dataclasses import dataclass
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, Protocol
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class PerformanceRecord:
+
+class AlertSeverity(str, Enum):
+    """Severity levels for alerts."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class AlertCondition(str, Enum):
+    """Condition operators for alert rules."""
+
+    LESS_THAN = "<"
+    GREATER_THAN = ">"
+    EQUAL = "=="
+    NOT_EQUAL = "!="
+
+
+class PerformanceRecord(BaseModel):
     """Performance record for a model at a specific time."""
 
     model_name: str
     model_version: str
     timestamp: str
-    accuracy: float
-    precision: float
-    recall: float
-    f1: float
-    latency_ms: float
-    throughput_rps: float
-    error_rate: float
-    sample_count: int
-
-    def __post_init__(self) -> None:
-        """Validate performance metrics."""
-        # Validate accuracy metrics
-        for metric_name, value in [
-            ("accuracy", self.accuracy),
-            ("precision", self.precision),
-            ("recall", self.recall),
-            ("f1", self.f1),
-        ]:
-            if not 0.0 <= value <= 1.0:
-                msg = f"{metric_name} must be between 0.0 and 1.0, got {value}"
-                raise ValueError(msg)
-
-        # Validate performance metrics
-        if self.latency_ms < 0:
-            msg = f"Latency must be non-negative, got {self.latency_ms}"
-            raise ValueError(msg)
-
-        if self.throughput_rps < 0:
-            msg = f"Throughput must be non-negative, got {self.throughput_rps}"
-            raise ValueError(msg)
-
-        if not 0.0 <= self.error_rate <= 1.0:
-            msg = f"Error rate must be between 0.0 and 1.0, got {self.error_rate}"
-            raise ValueError(msg)
-
-        if self.sample_count < 0:
-            msg = f"Sample count must be non-negative, got {self.sample_count}"
-            raise ValueError(msg)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "model_name": self.model_name,
-            "model_version": self.model_version,
-            "timestamp": self.timestamp,
-            "accuracy": self.accuracy,
-            "precision": self.precision,
-            "recall": self.recall,
-            "f1": self.f1,
-            "latency_ms": self.latency_ms,
-            "throughput_rps": self.throughput_rps,
-            "error_rate": self.error_rate,
-            "sample_count": self.sample_count,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "PerformanceRecord":
-        """Create from dictionary."""
-        return cls(
-            model_name=data["model_name"],
-            model_version=data["model_version"],
-            timestamp=data["timestamp"],
-            accuracy=data["accuracy"],
-            precision=data["precision"],
-            recall=data["recall"],
-            f1=data["f1"],
-            latency_ms=data["latency_ms"],
-            throughput_rps=data["throughput_rps"],
-            error_rate=data["error_rate"],
-            sample_count=data["sample_count"],
-        )
+    accuracy: float = Field(ge=0.0, le=1.0)
+    precision: float = Field(ge=0.0, le=1.0)
+    recall: float = Field(ge=0.0, le=1.0)
+    f1: float = Field(ge=0.0, le=1.0)
+    latency_ms: float = Field(ge=0.0)
+    throughput_rps: float = Field(ge=0.0)
+    error_rate: float = Field(ge=0.0, le=1.0)
+    sample_count: int = Field(ge=0)
 
 
-@dataclass
-class TimeSeriesData:
+class TimeSeriesData(BaseModel):
     """Time series data for a specific metric."""
 
     model_name: str
@@ -121,16 +75,15 @@ class TimeSeriesData:
         }
 
 
-@dataclass
-class AlertRule:
+class AlertRule(BaseModel):
     """Rule for triggering alerts based on metrics."""
 
     rule_id: str
     model_name: str
     metric_name: str
-    condition: str  # "<", ">", "==", "!="
+    condition: AlertCondition
     threshold: float
-    severity: str  # "low", "medium", "high", "critical"
+    severity: AlertSeverity
     description: str
     enabled: bool
 
@@ -150,36 +103,8 @@ class AlertRule:
         msg = f"Unknown condition: {self.condition}"
         raise ValueError(msg)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "rule_id": self.rule_id,
-            "model_name": self.model_name,
-            "metric_name": self.metric_name,
-            "condition": self.condition,
-            "threshold": self.threshold,
-            "severity": self.severity,
-            "description": self.description,
-            "enabled": self.enabled,
-        }
 
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "AlertRule":
-        """Create from dictionary."""
-        return cls(
-            rule_id=data["rule_id"],
-            model_name=data["model_name"],
-            metric_name=data["metric_name"],
-            condition=data["condition"],
-            threshold=data["threshold"],
-            severity=data["severity"],
-            description=data["description"],
-            enabled=data["enabled"],
-        )
-
-
-@dataclass
-class Alert:
+class Alert(BaseModel):
     """Alert triggered by a rule."""
 
     alert_id: str
@@ -188,7 +113,7 @@ class Alert:
     metric_name: str
     current_value: float
     threshold: float
-    severity: str
+    severity: AlertSeverity
     message: str
     triggered_at: str
     acknowledged: bool = False
@@ -196,37 +121,6 @@ class Alert:
     def acknowledge(self) -> None:
         """Acknowledge the alert."""
         self.acknowledged = True
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "alert_id": self.alert_id,
-            "rule_id": self.rule_id,
-            "model_name": self.model_name,
-            "metric_name": self.metric_name,
-            "current_value": self.current_value,
-            "threshold": self.threshold,
-            "severity": self.severity,
-            "message": self.message,
-            "triggered_at": self.triggered_at,
-            "acknowledged": self.acknowledged,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Alert":
-        """Create from dictionary."""
-        return cls(
-            alert_id=data["alert_id"],
-            rule_id=data["rule_id"],
-            model_name=data["model_name"],
-            metric_name=data["metric_name"],
-            current_value=data["current_value"],
-            threshold=data["threshold"],
-            severity=data["severity"],
-            message=data["message"],
-            triggered_at=data["triggered_at"],
-            acknowledged=data.get("acknowledged", False),
-        )
 
 
 class PerformanceStorage(Protocol):
@@ -286,7 +180,7 @@ class FilePerformanceStorage:
         record_file = model_dir / f"{timestamp_str}.json"
 
         with record_file.open("w") as f:
-            json.dump(record.to_dict(), f, indent=2)
+            f.write(record.model_dump_json(indent=2))
 
     def get_performance_records(self, model_name: str, time_range: str) -> list[PerformanceRecord]:
         """Get performance records for a model within time range."""
@@ -297,8 +191,7 @@ class FilePerformanceStorage:
         records = []
         for record_file in model_dir.glob("*.json"):
             with record_file.open() as f:
-                data = json.load(f)
-            records.append(PerformanceRecord.from_dict(data))
+                records.append(PerformanceRecord.model_validate_json(f.read()))
 
         # Sort by timestamp
         records.sort(key=lambda r: r.timestamp)
@@ -316,7 +209,7 @@ class FilePerformanceStorage:
         """Save alert rule to file."""
         rule_file = self._rules_dir / f"{rule.rule_id}.json"
         with rule_file.open("w") as f:
-            json.dump(rule.to_dict(), f, indent=2)
+            f.write(rule.model_dump_json(indent=2))
 
     def get_alert_rules(self, model_name: str) -> list[AlertRule]:
         """Get alert rules for a model."""
@@ -324,8 +217,7 @@ class FilePerformanceStorage:
 
         for rule_file in self._rules_dir.glob("*.json"):
             with rule_file.open() as f:
-                data = json.load(f)
-            rule = AlertRule.from_dict(data)
+                rule = AlertRule.model_validate_json(f.read())
 
             if rule.model_name == model_name:
                 rules.append(rule)
@@ -336,7 +228,7 @@ class FilePerformanceStorage:
         """Save alert to file."""
         alert_file = self._alerts_dir / f"{alert.alert_id}.json"
         with alert_file.open("w") as f:
-            json.dump(alert.to_dict(), f, indent=2)
+            f.write(alert.model_dump_json(indent=2))
 
     def get_active_alerts(self, model_name: str) -> list[Alert]:
         """Get active (unacknowledged) alerts for a model."""
@@ -344,8 +236,7 @@ class FilePerformanceStorage:
 
         for alert_file in self._alerts_dir.glob("*.json"):
             with alert_file.open() as f:
-                data = json.load(f)
-            alert = Alert.from_dict(data)
+                alert = Alert.model_validate_json(f.read())
 
             if alert.model_name == model_name and not alert.acknowledged:
                 alerts.append(alert)

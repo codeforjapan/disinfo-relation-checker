@@ -1,15 +1,15 @@
 """Training data management with SOLID design principles."""
 
 import random
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from pydantic import BaseModel
 
 from .csv_processor import CsvProcessor
 
 
-@dataclass
-class ValidationDataset:
+class ValidationDataset(BaseModel):
     """Represents a validation dataset split."""
 
     train_data: list[dict[str, Any]]

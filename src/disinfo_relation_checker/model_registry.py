@@ -1,32 +1,19 @@
 """Model registry and versioning with SOLID design principles."""
 
-import json
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Protocol
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class PerformanceMetrics:
+
+class PerformanceMetrics(BaseModel):
     """Performance metrics for a model."""
 
-    accuracy: float
-    precision: float
-    recall: float
-    f1: float
-
-    def __post_init__(self) -> None:
-        """Validate metrics are within valid ranges."""
-        for metric_name, value in [
-            ("accuracy", self.accuracy),
-            ("precision", self.precision),
-            ("recall", self.recall),
-            ("f1", self.f1),
-        ]:
-            if not 0.0 <= value <= 1.0:
-                msg = f"{metric_name} must be between 0.0 and 1.0, got {value}"
-                raise ValueError(msg)
+    accuracy: float = Field(ge=0.0, le=1.0)
+    precision: float = Field(ge=0.0, le=1.0)
+    recall: float = Field(ge=0.0, le=1.0)
+    f1: float = Field(ge=0.0, le=1.0)
 
     def __lt__(self, other: "PerformanceMetrics") -> bool:
         """Compare metrics based on F1 score."""
@@ -36,33 +23,13 @@ class PerformanceMetrics:
         """Compare metrics based on F1 score."""
         return self.f1 > other.f1
 
-    def to_dict(self) -> dict[str, float]:
-        """Convert to dictionary."""
-        return {
-            "accuracy": self.accuracy,
-            "precision": self.precision,
-            "recall": self.recall,
-            "f1": self.f1,
-        }
 
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "PerformanceMetrics":
-        """Create from dictionary."""
-        return cls(
-            accuracy=data["accuracy"],
-            precision=data["precision"],
-            recall=data["recall"],
-            f1=data["f1"],
-        )
-
-
-@dataclass
-class ModelVersion:
+class ModelVersion(BaseModel):
     """Semantic version for models."""
 
-    major: int
-    minor: int
-    patch: int
+    major: int = Field(ge=0)
+    minor: int = Field(ge=0)
+    patch: int = Field(ge=0)
 
     def __lt__(self, other: "ModelVersion") -> bool:
         """Compare versions."""
@@ -99,8 +66,7 @@ class ModelVersion:
         return cls(major=major, minor=minor, patch=patch)
 
 
-@dataclass
-class ModelMetadata:
+class ModelMetadata(BaseModel):
     """Metadata for a registered model."""
 
     name: str
@@ -111,33 +77,6 @@ class ModelMetadata:
     performance: PerformanceMetrics
     created_at: str
     tags: list[str]
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "name": self.name,
-            "version": self.version,
-            "description": self.description,
-            "prompt_template": self.prompt_template,
-            "llm_config": self.llm_config,
-            "performance": self.performance.to_dict(),
-            "created_at": self.created_at,
-            "tags": self.tags,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ModelMetadata":
-        """Create from dictionary."""
-        return cls(
-            name=data["name"],
-            version=data["version"],
-            description=data["description"],
-            prompt_template=data["prompt_template"],
-            llm_config=data["llm_config"],
-            performance=PerformanceMetrics.from_dict(data["performance"]),
-            created_at=data["created_at"],
-            tags=data["tags"],
-        )
 
 
 class ModelStorage(Protocol):
@@ -179,7 +118,7 @@ class FileModelStorage:
 
         model_file = model_dir / f"{metadata.version}.json"
         with model_file.open("w") as f:
-            json.dump(metadata.to_dict(), f, indent=2)
+            f.write(metadata.model_dump_json(indent=2))
 
     def get_model(self, name: str, version: str) -> ModelMetadata | None:
         """Get model metadata by name and version."""
@@ -188,9 +127,7 @@ class FileModelStorage:
             return None
 
         with model_file.open() as f:
-            data = json.load(f)
-
-        return ModelMetadata.from_dict(data)
+            return ModelMetadata.model_validate_json(f.read())
 
     def list_models(self) -> list[ModelMetadata]:
         """List all registered models."""
@@ -202,8 +139,7 @@ class FileModelStorage:
 
             for version_file in model_dir.glob("*.json"):
                 with version_file.open() as f:
-                    data = json.load(f)
-                models.append(ModelMetadata.from_dict(data))
+                    models.append(ModelMetadata.model_validate_json(f.read()))
 
         return models
 
@@ -216,8 +152,7 @@ class FileModelStorage:
         versions = []
         for version_file in model_dir.glob("*.json"):
             with version_file.open() as f:
-                data = json.load(f)
-            versions.append(ModelMetadata.from_dict(data))
+                versions.append(ModelMetadata.model_validate_json(f.read()))
 
         # Sort by version
         versions.sort(key=lambda m: ModelVersion.from_string(m.version))
@@ -284,8 +219,9 @@ class ModelRegistry:
         if not metadata:
             return False
 
-        metadata.tags = tags
-        self._storage.save_model(metadata)
+        # Create new metadata with updated tags
+        updated_metadata = metadata.model_copy(update={"tags": tags})
+        self._storage.save_model(updated_metadata)
         return True
 
     def search_models(self, query: str) -> list[ModelMetadata]:
@@ -329,7 +265,7 @@ def create_model_metadata_from_config(
         raise ValueError(msg)
 
     llm_config = config_data.get("llm_config", {"provider_type": "mock"})
-    performance = PerformanceMetrics.from_dict(config_data["performance"])
+    performance = PerformanceMetrics.model_validate(config_data["performance"])
     created_at = datetime.now(UTC).isoformat()
 
     return ModelMetadata(

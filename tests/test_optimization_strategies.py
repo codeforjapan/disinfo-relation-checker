@@ -43,9 +43,9 @@ class TestGeneticOptimizationStrategy:
 
         mock_evaluator = Mock()
         mock_evaluator.side_effect = [
-            PromptCandidate("Template 1: {text}", 0.7, 0.7, 0.7, 0.7),
-            PromptCandidate("Template 2: {text}", 0.8, 0.8, 0.8, 0.8),
-            PromptCandidate("Template 3: {text}", 0.9, 0.9, 0.9, 0.9),
+            PromptCandidate(template="Template 1: {text}", accuracy=0.7, precision=0.7, recall=0.7, f1=0.7),
+            PromptCandidate(template="Template 2: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8),
+            PromptCandidate(template="Template 3: {text}", accuracy=0.9, precision=0.9, recall=0.9, f1=0.9),
         ]
 
         strategy = GeneticOptimizationStrategy(population_size=3)
@@ -71,9 +71,9 @@ class TestGeneticOptimizationStrategy:
         strategy = GeneticOptimizationStrategy(population_size=3)
 
         population = [
-            PromptCandidate("Template 1: {text}", 0.5, 0.5, 0.5, 0.5),
-            PromptCandidate("Template 2: {text}", 0.8, 0.8, 0.8, 0.8),
-            PromptCandidate("Template 3: {text}", 0.9, 0.9, 0.9, 0.9),
+            PromptCandidate(template="Template 1: {text}", accuracy=0.5, precision=0.5, recall=0.5, f1=0.5),
+            PromptCandidate(template="Template 2: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8),
+            PromptCandidate(template="Template 3: {text}", accuracy=0.9, precision=0.9, recall=0.9, f1=0.9),
         ]
 
         selected = strategy._select_parents(population, num_parents=2)
@@ -86,8 +86,12 @@ class TestGeneticOptimizationStrategy:
         """Test genetic crossover operation."""
         strategy = GeneticOptimizationStrategy()
 
-        parent1 = PromptCandidate("Classify this text: {text}", 0.8, 0.8, 0.8, 0.8)
-        parent2 = PromptCandidate("Analyze the content: {text}", 0.7, 0.7, 0.7, 0.7)
+        parent1 = PromptCandidate(
+            template="Classify this text: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8
+        )
+        parent2 = PromptCandidate(
+            template="Analyze the content: {text}", accuracy=0.7, precision=0.7, recall=0.7, f1=0.7
+        )
 
         offspring = strategy._crossover(parent1, parent2)
 
@@ -129,10 +133,14 @@ class TestIterativeOptimizationStrategy:
 
         mock_evaluator = Mock()
         mock_evaluator.side_effect = [
-            PromptCandidate("Base template: {text}", 0.7, 0.7, 0.7, 0.7),
-            PromptCandidate("Improved template 1: {text}", 0.8, 0.8, 0.8, 0.8),
-            PromptCandidate("Improved template 2: {text}", 0.85, 0.85, 0.85, 0.85),
-            PromptCandidate("Improved template 3: {text}", 0.87, 0.87, 0.87, 0.87),
+            PromptCandidate(template="Base template: {text}", accuracy=0.7, precision=0.7, recall=0.7, f1=0.7),
+            PromptCandidate(template="Improved template 1: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8),
+            PromptCandidate(
+                template="Improved template 2: {text}", accuracy=0.85, precision=0.85, recall=0.85, f1=0.85
+            ),
+            PromptCandidate(
+                template="Improved template 3: {text}", accuracy=0.87, precision=0.87, recall=0.87, f1=0.87
+            ),
         ]
 
         strategy = IterativeOptimizationStrategy(improvement_threshold=0.01, refinement_steps=3)
@@ -159,8 +167,10 @@ class TestIterativeOptimizationStrategy:
 
         mock_evaluator = Mock()
         mock_evaluator.side_effect = [
-            PromptCandidate("Base template: {text}", 0.8, 0.8, 0.8, 0.8),
-            PromptCandidate("No improvement template: {text}", 0.79, 0.79, 0.79, 0.79),
+            PromptCandidate(template="Base template: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8),
+            PromptCandidate(
+                template="No improvement template: {text}", accuracy=0.79, precision=0.79, recall=0.79, f1=0.79
+            ),
         ]
 
         strategy = IterativeOptimizationStrategy(improvement_threshold=0.05)
@@ -186,7 +196,7 @@ class TestIterativeOptimizationStrategy:
         """Test refinement strategy selection."""
         strategy = IterativeOptimizationStrategy()
 
-        current_best = PromptCandidate("Simple: {text}", 0.7, 0.7, 0.7, 0.7)
+        current_best = PromptCandidate(template="Simple: {text}", accuracy=0.7, precision=0.7, recall=0.7, f1=0.7)
         refinement_type = strategy._select_refinement_strategy(current_best)
 
         # Should return a valid refinement strategy

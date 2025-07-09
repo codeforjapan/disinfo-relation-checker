@@ -1,66 +1,37 @@
 """A/B testing framework with SOLID design principles."""
 
 import hashlib
-import json
-from dataclasses import dataclass
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, Protocol
+
+from pydantic import BaseModel, Field
 
 from .model_registry import ModelRegistry
 
 
-@dataclass
-class ABTestConfig:
+class ABTestStatus(str, Enum):
+    """Status of an A/B test."""
+
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    PAUSED = "paused"
+
+
+class ABTestConfig(BaseModel):
     """Configuration for an A/B test."""
 
     test_name: str
     model_a: str  # Format: "model_name:version"
     model_b: str  # Format: "model_name:version"
-    traffic_split: int  # Percentage of traffic for model A (0-100)
+    traffic_split: int = Field(ge=0, le=100)  # Percentage of traffic for model A (0-100)
     test_data_path: str
     created_at: str
-    status: str  # "active", "completed", "paused"
-
-    def __post_init__(self) -> None:
-        """Validate configuration."""
-        if not 0 <= self.traffic_split <= 100:
-            msg = f"Traffic split must be between 0 and 100, got {self.traffic_split}"
-            raise ValueError(msg)
-
-        valid_statuses = ["active", "completed", "paused"]
-        if self.status not in valid_statuses:
-            msg = f"Status must be one of {valid_statuses}, got '{self.status}'"
-            raise ValueError(msg)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "test_name": self.test_name,
-            "model_a": self.model_a,
-            "model_b": self.model_b,
-            "traffic_split": self.traffic_split,
-            "test_data_path": self.test_data_path,
-            "created_at": self.created_at,
-            "status": self.status,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ABTestConfig":
-        """Create from dictionary."""
-        return cls(
-            test_name=data["test_name"],
-            model_a=data["model_a"],
-            model_b=data["model_b"],
-            traffic_split=data["traffic_split"],
-            test_data_path=data["test_data_path"],
-            created_at=data["created_at"],
-            status=data["status"],
-        )
+    status: ABTestStatus
 
 
-@dataclass
-class ABTestResult:
+class ABTestResult(BaseModel):
     """Results of an A/B test."""
 
     test_name: str
@@ -82,33 +53,6 @@ class ABTestResult:
         if f1_b > f1_a:
             return "model_b"
         return "no_significant_difference"
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "test_name": self.test_name,
-            "model_a_performance": self.model_a_performance,
-            "model_b_performance": self.model_b_performance,
-            "sample_size_a": self.sample_size_a,
-            "sample_size_b": self.sample_size_b,
-            "statistical_significance": self.statistical_significance,
-            "winner": self.winner,
-            "completed_at": self.completed_at,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ABTestResult":
-        """Create from dictionary."""
-        return cls(
-            test_name=data["test_name"],
-            model_a_performance=data["model_a_performance"],
-            model_b_performance=data["model_b_performance"],
-            sample_size_a=data["sample_size_a"],
-            sample_size_b=data["sample_size_b"],
-            statistical_significance=data["statistical_significance"],
-            winner=data["winner"],
-            completed_at=data["completed_at"],
-        )
 
 
 class TrafficSplitter:
@@ -173,7 +117,7 @@ class FileABTestStorage:
         """Save A/B test configuration to file."""
         config_file = self._configs_dir / f"{config.test_name}.json"
         with config_file.open("w") as f:
-            json.dump(config.to_dict(), f, indent=2)
+            f.write(config.model_dump_json(indent=2))
 
     def get_ab_test_config(self, test_name: str) -> ABTestConfig | None:
         """Get A/B test configuration by name."""
@@ -182,9 +126,7 @@ class FileABTestStorage:
             return None
 
         with config_file.open() as f:
-            data = json.load(f)
-
-        return ABTestConfig.from_dict(data)
+            return ABTestConfig.model_validate_json(f.read())
 
     def list_ab_tests(self) -> list[ABTestConfig]:
         """List all A/B test configurations."""
@@ -192,8 +134,7 @@ class FileABTestStorage:
 
         for config_file in self._configs_dir.glob("*.json"):
             with config_file.open() as f:
-                data = json.load(f)
-            configs.append(ABTestConfig.from_dict(data))
+                configs.append(ABTestConfig.model_validate_json(f.read()))
 
         return configs
 
@@ -201,7 +142,7 @@ class FileABTestStorage:
         """Save A/B test result to file."""
         result_file = self._results_dir / f"{result.test_name}.json"
         with result_file.open("w") as f:
-            json.dump(result.to_dict(), f, indent=2)
+            f.write(result.model_dump_json(indent=2))
 
     def get_ab_test_result(self, test_name: str) -> ABTestResult | None:
         """Get A/B test result by name."""
@@ -210,9 +151,7 @@ class FileABTestStorage:
             return None
 
         with result_file.open() as f:
-            data = json.load(f)
-
-        return ABTestResult.from_dict(data)
+            return ABTestResult.model_validate_json(f.read())
 
 
 class ABTestRunner:
@@ -332,18 +271,17 @@ class ABTestRunner:
         if not config:
             return False
 
-        config.status = "paused"
-        self._storage.save_ab_test_config(config)
+        updated_config = config.model_copy(update={"status": ABTestStatus.PAUSED})
+        self._storage.save_ab_test_config(updated_config)
         return True
 
     def get_active_tests(self) -> list[ABTestConfig]:
         """Get all active A/B tests."""
         all_tests = self.list_ab_tests()
-        return [test for test in all_tests if test.status == "active"]
+        return [test for test in all_tests if test.status == ABTestStatus.ACTIVE]
 
 
-@dataclass
-class ABTest:
+class ABTest(BaseModel):
     """Represents a complete A/B test with config and results."""
 
     config: ABTestConfig
