@@ -43,7 +43,24 @@ dev = [
 target-version = "py311"
 line-length = 120
 lint.select = ["ALL"]
-lint.ignore = ["D203", "D213", "COM812", "PLR2004", "ANN401", "ARG002", "BLE001", "TRY301", "PLC0415", "T201", "S311", "SIM102", "PLW1641", "PLR0913", "B007", "FBT001", "FBT002"]
+lint.ignore = [
+    "D203",
+    "D213",
+    "COM812",
+    "PLR2004",
+    "ANN401",
+    "ARG002",
+    "BLE001",
+    "TRY301",
+    "PLC0415",
+    "T201",
+    "S311",
+    "SIM102",
+    "PLW1641",
+    "PLR0913",
+    "B007",
+    "FBT001",
+]
 
 [tool.ruff.format]
 quote-style = "double"

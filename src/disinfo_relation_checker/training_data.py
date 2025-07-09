@@ -247,6 +247,7 @@ class TrainingDataManager:
     def load_and_split_data(
         self,
         file_path: Path,
+        *,
         train_ratio: float = 0.7,
         validation_ratio: float = 0.2,
         test_ratio: float = 0.1,
