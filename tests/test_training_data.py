@@ -212,7 +212,9 @@ class TestTrainingDataManager:
         mock_validator.validate_data_quality.return_value = []
 
         manager = TrainingDataManager(
-            csv_processor=mock_csv_processor, data_splitter=mock_splitter, data_validator=mock_validator
+            csv_processor=mock_csv_processor,
+            data_splitter=mock_splitter,
+            data_validator=mock_validator,
         )
 
         # Test loading and splitting
@@ -241,7 +243,9 @@ class TestTrainingDataManager:
         mock_validator.validate_data_quality.return_value = []
 
         manager = TrainingDataManager(
-            csv_processor=mock_csv_processor, data_splitter=mock_splitter, data_validator=mock_validator
+            csv_processor=mock_csv_processor,
+            data_splitter=mock_splitter,
+            data_validator=mock_validator,
         )
 
         # Test cross-validation preparation
@@ -251,7 +255,8 @@ class TestTrainingDataManager:
         # Verify interactions
         mock_csv_processor.read_labeled_data.assert_called_once_with(file_path)
         mock_splitter.cross_validation_split.assert_called_once_with(
-            mock_csv_processor.read_labeled_data.return_value, 2
+            mock_csv_processor.read_labeled_data.return_value,
+            2,
         )
 
         assert len(folds) == 2

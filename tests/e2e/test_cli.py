@@ -204,7 +204,7 @@ def test_ollama_provider() -> None:
                 "base_url": "http://localhost:11434",
                 "model": "gemma3n:e4b",
                 "timeout": 30,
-            }
+            },
         }
         with config_file.open("w") as f:
             yaml.dump(config_data, f)

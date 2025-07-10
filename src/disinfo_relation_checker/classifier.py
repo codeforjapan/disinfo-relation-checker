@@ -176,7 +176,7 @@ class TextClassifier:
                     "text": text,
                     "prediction": prediction,
                     "confidence": f"{confidence:.2f}",
-                }
+                },
             )
 
         return results

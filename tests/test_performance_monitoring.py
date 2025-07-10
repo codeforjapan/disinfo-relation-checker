@@ -202,7 +202,10 @@ class TestTimeSeriesData:
         assert values == [0.85, 0.87]
 
         latency_series = TimeSeriesData(
-            model_name="test_model", metric_name="latency_ms", time_range="24h", records=records
+            model_name="test_model",
+            metric_name="latency_ms",
+            time_range="24h",
+            records=records,
         )
 
         latency_values = latency_series.get_values()
@@ -453,7 +456,10 @@ class TestMetricCollector:
         latencies = [150.0, 145.0, 160.0, 155.0, 140.0]
 
         record = collector.collect_latency_metrics(
-            model_name="test_model", model_version="1.0.0", latencies=latencies, timestamp="2025-01-01T00:00:00Z"
+            model_name="test_model",
+            model_version="1.0.0",
+            latencies=latencies,
+            timestamp="2025-01-01T00:00:00Z",
         )
 
         assert record.model_name == "test_model"
@@ -480,7 +486,7 @@ class TestMetricCollector:
                 throughput_rps=100.0,
                 error_rate=0.01,
                 sample_count=1000,
-            )
+            ),
         ]
 
         mock_storage.get_performance_records.return_value = mock_records
@@ -505,7 +511,9 @@ class TestPerformanceMonitor:
         mock_storage = Mock()
 
         monitor = PerformanceMonitor(
-            metric_collector=mock_metric_collector, alert_manager=mock_alert_manager, storage=mock_storage
+            metric_collector=mock_metric_collector,
+            alert_manager=mock_alert_manager,
+            storage=mock_storage,
         )
 
         assert monitor._metric_collector == mock_metric_collector
@@ -519,7 +527,9 @@ class TestPerformanceMonitor:
         mock_storage = Mock()
 
         monitor = PerformanceMonitor(
-            metric_collector=mock_metric_collector, alert_manager=mock_alert_manager, storage=mock_storage
+            metric_collector=mock_metric_collector,
+            alert_manager=mock_alert_manager,
+            storage=mock_storage,
         )
 
         rule = AlertRule(
@@ -544,7 +554,9 @@ class TestPerformanceMonitor:
         mock_storage = Mock()
 
         monitor = PerformanceMonitor(
-            metric_collector=mock_metric_collector, alert_manager=mock_alert_manager, storage=mock_storage
+            metric_collector=mock_metric_collector,
+            alert_manager=mock_alert_manager,
+            storage=mock_storage,
         )
 
         # Mock alert rules
@@ -558,7 +570,7 @@ class TestPerformanceMonitor:
                 severity=AlertSeverity.HIGH,
                 description="Accuracy too low",
                 enabled=True,
-            )
+            ),
         ]
 
         # Mock performance record with low accuracy
@@ -594,7 +606,9 @@ class TestPerformanceMonitor:
         mock_storage = Mock()
 
         monitor = PerformanceMonitor(
-            metric_collector=mock_metric_collector, alert_manager=mock_alert_manager, storage=mock_storage
+            metric_collector=mock_metric_collector,
+            alert_manager=mock_alert_manager,
+            storage=mock_storage,
         )
 
         # Mock time series data
@@ -615,7 +629,7 @@ class TestPerformanceMonitor:
                     throughput_rps=100.0,
                     error_rate=0.01,
                     sample_count=1000,
-                )
+                ),
             ],
         )
 
@@ -636,7 +650,9 @@ class TestPerformanceMonitor:
         mock_storage = Mock()
 
         monitor = PerformanceMonitor(
-            metric_collector=mock_metric_collector, alert_manager=mock_alert_manager, storage=mock_storage
+            metric_collector=mock_metric_collector,
+            alert_manager=mock_alert_manager,
+            storage=mock_storage,
         )
 
         expected_alerts = [
@@ -651,7 +667,7 @@ class TestPerformanceMonitor:
                 message="Accuracy dropped to 75%",
                 triggered_at="2025-01-01T00:00:00Z",
                 acknowledged=False,
-            )
+            ),
         ]
 
         mock_storage.get_active_alerts.return_value = expected_alerts

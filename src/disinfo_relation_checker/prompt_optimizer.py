@@ -1,10 +1,25 @@
 """Prompt optimization engine with SOLID design principles."""
 
-from typing import Any, Protocol
+from typing import Protocol, TypedDict, Unpack
 
 from pydantic import BaseModel, Field
 
 from .classifier import TextClassifier
+
+
+class PromptEvaluatorProtocol(Protocol):
+    """Protocol for prompt evaluation functions."""
+
+    def __call__(self, template: str, labeled_data: list[dict[str, str]]) -> "PromptCandidate":
+        """Evaluate a prompt template on labeled data."""
+        ...
+
+
+class OptimizationParams(TypedDict, total=False):
+    """Parameters for optimization strategies."""
+
+    max_generations: int
+    max_iterations: int
 
 
 class PromptCandidate(BaseModel):
@@ -61,13 +76,13 @@ class PromptGenerator:
                     base_template.replace("Classify", "Determine"),
                     base_template.replace("Classify", "Categorize"),
                     base_template.replace("classify", "identify"),
-                ]
+                ],
             )
 
         # Add different response formats
         if "1 or 0" in base_template:
             variations.append(
-                base_template.replace("1 or 0", "true or false").replace("1", "true").replace("0", "false")
+                base_template.replace("1 or 0", "true or false").replace("1", "true").replace("0", "false"),
             )
 
         # Add different phrasings
@@ -76,12 +91,12 @@ class PromptGenerator:
                 f"Please {base_template.lower()}",
                 f"{base_template}\n\nAnswer:",
                 f"Task: {base_template}",
-            ]
+            ],
         )
 
         return variations
 
-    def generate_few_shot_templates(self, training_data: list[dict[str, Any]]) -> list[str]:
+    def generate_few_shot_templates(self, training_data: list[dict[str, str]]) -> list[str]:
         """Generate few-shot prompt templates using training examples."""
         if len(training_data) < 2:
             return self.generate_base_templates()
@@ -135,10 +150,10 @@ class OptimizationStrategy(Protocol):
     def optimize(
         self,
         initial_templates: list[str],
-        training_data: list[dict[str, Any]],
-        evaluator: Any,
+        training_data: list[dict[str, str]],
+        evaluator: PromptEvaluatorProtocol,
         prompt_generator: PromptGenerator,
-        **kwargs: Any,
+        **kwargs: Unpack[OptimizationParams],
     ) -> PromptCandidate:
         """Optimize prompts using specific strategy."""
         ...
@@ -161,7 +176,10 @@ class PromptOptimizer:
         self._classifier = classifier
 
     def optimize_prompts(
-        self, training_data: list[dict[str, Any]], target_accuracy: float, max_iterations: int = 10
+        self,
+        training_data: list[dict[str, str]],
+        target_accuracy: float,
+        max_iterations: int = 10,
     ) -> PromptCandidate:
         """Optimize prompts to meet target accuracy."""
         if not self._optimization_strategy:
@@ -208,7 +226,7 @@ class PromptOptimizer:
             raise ValueError(msg)
         return best_candidate
 
-    def evaluate_prompt_template(self, template: str, labeled_data: list[dict[str, Any]]) -> PromptCandidate:
+    def evaluate_prompt_template(self, template: str, labeled_data: list[dict[str, str]]) -> PromptCandidate:
         """Evaluate a prompt template on labeled data."""
         if not self._classifier:
             msg = "Classifier not provided"

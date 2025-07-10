@@ -5,7 +5,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel, Field
 
@@ -121,6 +121,22 @@ class Alert(BaseModel):
     def acknowledge(self) -> None:
         """Acknowledge the alert."""
         self.acknowledged = True
+
+
+class ClassifierProtocol(Protocol):
+    """Protocol for classifier objects in performance monitoring."""
+
+    def validate(self, test_data: list[dict[str, str]]) -> dict[str, float]:
+        """Validate classifier performance on test data."""
+        ...
+
+
+class AlertManagerProtocol(Protocol):
+    """Protocol for alert manager objects."""
+
+    def send_alert(self, alert: Alert) -> None:
+        """Send alert notification."""
+        ...
 
 
 class PerformanceStorage(Protocol):
@@ -255,8 +271,8 @@ class MetricCollector:
         self,
         model_name: str,
         model_version: str,
-        classifier: Any,
-        test_data: list[dict[str, Any]],
+        classifier: ClassifierProtocol,
+        test_data: list[dict[str, str]],
         start_time: str,
     ) -> PerformanceRecord:
         """Collect performance metrics for a model."""
@@ -341,7 +357,7 @@ class PerformanceMonitor:
     def __init__(
         self,
         metric_collector: MetricCollector,
-        alert_manager: Any = None,
+        alert_manager: AlertManagerProtocol | None = None,
         storage: PerformanceStorage | None = None,
     ) -> None:
         """Initialize with dependencies."""
@@ -411,7 +427,7 @@ Sample count: {stats["count"]}"""
         # For now, simplified implementation
         return True
 
-    def get_model_health_status(self, model_name: str) -> dict[str, Any]:
+    def get_model_health_status(self, model_name: str) -> dict[str, float | int | str]:
         """Get overall health status for a model."""
         latest_record = self._storage.get_latest_performance_record(model_name)
         active_alerts = self.list_active_alerts(model_name)

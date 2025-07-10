@@ -121,7 +121,10 @@ class DataSplitter:
         return ValidationDataset(train_data=train_data, validation_data=validation_data, test_data=test_data)
 
     def cross_validation_split(
-        self, data: list[dict[str, Any]], k: int, random_seed: int | None = None
+        self,
+        data: list[dict[str, Any]],
+        k: int,
+        random_seed: int | None = None,
     ) -> list[list[dict[str, Any]]]:
         """Split data into k folds for cross-validation."""
         if k <= 1:
@@ -180,7 +183,10 @@ class DataValidator:
         return all(abs(prop - target_proportion) <= threshold for prop in proportions)
 
     def has_minimum_samples_per_class(
-        self, data: list[dict[str, Any]], min_samples: int, label_key: str = "label"
+        self,
+        data: list[dict[str, Any]],
+        min_samples: int,
+        label_key: str = "label",
     ) -> bool:
         """Check if each class has minimum number of samples."""
         if not data:
@@ -195,7 +201,10 @@ class DataValidator:
         return all(count >= min_samples for count in label_counts.values())
 
     def validate_data_quality(
-        self, data: list[dict[str, Any]], text_key: str = "text", label_key: str = "label"
+        self,
+        data: list[dict[str, Any]],
+        text_key: str = "text",
+        label_key: str = "label",
     ) -> list[str]:
         """Validate comprehensive data quality and return issues."""
         issues = []

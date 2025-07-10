@@ -87,10 +87,18 @@ class TestGeneticOptimizationStrategy:
         strategy = GeneticOptimizationStrategy()
 
         parent1 = PromptCandidate(
-            template="Classify this text: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8
+            template="Classify this text: {text}",
+            accuracy=0.8,
+            precision=0.8,
+            recall=0.8,
+            f1=0.8,
         )
         parent2 = PromptCandidate(
-            template="Analyze the content: {text}", accuracy=0.7, precision=0.7, recall=0.7, f1=0.7
+            template="Analyze the content: {text}",
+            accuracy=0.7,
+            precision=0.7,
+            recall=0.7,
+            f1=0.7,
         )
 
         offspring = strategy._crossover(parent1, parent2)
@@ -136,10 +144,18 @@ class TestIterativeOptimizationStrategy:
             PromptCandidate(template="Base template: {text}", accuracy=0.7, precision=0.7, recall=0.7, f1=0.7),
             PromptCandidate(template="Improved template 1: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8),
             PromptCandidate(
-                template="Improved template 2: {text}", accuracy=0.85, precision=0.85, recall=0.85, f1=0.85
+                template="Improved template 2: {text}",
+                accuracy=0.85,
+                precision=0.85,
+                recall=0.85,
+                f1=0.85,
             ),
             PromptCandidate(
-                template="Improved template 3: {text}", accuracy=0.87, precision=0.87, recall=0.87, f1=0.87
+                template="Improved template 3: {text}",
+                accuracy=0.87,
+                precision=0.87,
+                recall=0.87,
+                f1=0.87,
             ),
         ]
 
@@ -169,7 +185,11 @@ class TestIterativeOptimizationStrategy:
         mock_evaluator.side_effect = [
             PromptCandidate(template="Base template: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8),
             PromptCandidate(
-                template="No improvement template: {text}", accuracy=0.79, precision=0.79, recall=0.79, f1=0.79
+                template="No improvement template: {text}",
+                accuracy=0.79,
+                precision=0.79,
+                recall=0.79,
+                f1=0.79,
             ),
         ]
 

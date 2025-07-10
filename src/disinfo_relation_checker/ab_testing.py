@@ -76,6 +76,18 @@ class TrafficSplitter:
         return "A" if percentage <= self._split_percentage else "B"
 
 
+class ClassifierProtocol(Protocol):
+    """Protocol for classifier implementations."""
+
+    def set_prompt_template(self, template: str) -> None:
+        """Set the prompt template."""
+        ...
+
+    def validate(self, test_data: list[dict[str, str]]) -> dict[str, float]:
+        """Validate classifier performance."""
+        ...
+
+
 class ABTestStorage(Protocol):
     """Protocol for A/B test storage backends."""
 
@@ -160,7 +172,7 @@ class ABTestRunner:
     def __init__(
         self,
         model_registry: ModelRegistry,
-        classifier: Any,
+        classifier: ClassifierProtocol,
         storage: ABTestStorage | None = None,
     ) -> None:
         """Initialize with dependencies."""

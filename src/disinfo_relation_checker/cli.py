@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -164,7 +165,9 @@ def handle_optimize_command(args: argparse.Namespace) -> None:
 
         # Run optimization
         best_candidate = optimizer.optimize_prompts(
-            training_data=training_data, target_accuracy=target_accuracy, max_iterations=max_iterations
+            training_data=training_data,
+            target_accuracy=target_accuracy,
+            max_iterations=max_iterations,
         )
 
         # Display results
@@ -343,7 +346,6 @@ def handle_ab_test_setup_command(args: argparse.Namespace) -> None:
 
     try:
         # Create A/B test configuration
-        from datetime import UTC, datetime
 
         config = ABTestConfig(
             test_name=test_name,
@@ -455,7 +457,11 @@ def handle_monitor_performance_command(args: argparse.Namespace) -> None:
 
         # Get health status
         health = monitor.get_model_health_status(model_name)
-        print(f"\nOverall Health: {health['status'].upper()}")
+        status = health["status"]
+        if isinstance(status, str):
+            print(f"\nOverall Health: {status.upper()}")
+        else:
+            print(f"\nOverall Health: {status}")
 
     except Exception as e:
         print(f"Error monitoring performance: {e}", file=sys.stderr)
@@ -485,20 +491,32 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     # Validate command
     validate_parser = subparsers.add_parser("validate", help="Validate classifier performance on labeled data")
     validate_parser.add_argument(
-        "--labeled-data", type=str, required=True, help="Labeled CSV file path with text and label columns"
+        "--labeled-data",
+        type=str,
+        required=True,
+        help="Labeled CSV file path with text and label columns",
     )
     validate_parser.add_argument("--config", type=str, help="Configuration file path (YAML)")
 
     # Optimize command
     optimize_parser = subparsers.add_parser("optimize", help="Optimize prompt templates for better performance")
     optimize_parser.add_argument(
-        "--training-data", type=str, required=True, help="Training data CSV file path with text and label columns"
+        "--training-data",
+        type=str,
+        required=True,
+        help="Training data CSV file path with text and label columns",
     )
     optimize_parser.add_argument(
-        "--target-accuracy", type=str, required=True, help="Target accuracy threshold (e.g., 0.9)"
+        "--target-accuracy",
+        type=str,
+        required=True,
+        help="Target accuracy threshold (e.g., 0.9)",
     )
     optimize_parser.add_argument(
-        "--max-iterations", type=str, default="10", help="Maximum optimization iterations (default: 10)"
+        "--max-iterations",
+        type=str,
+        default="10",
+        help="Maximum optimization iterations (default: 10)",
     )
     optimize_parser.add_argument("--output", type=str, help="Output file path for optimized prompt (JSON)")
     optimize_parser.add_argument("--config", type=str, help="Configuration file path (YAML)")
@@ -512,7 +530,10 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         help="Model configuration file path (JSON) with prompt_template and optional llm_config",
     )
     evaluate_parser.add_argument(
-        "--test-data", type=str, required=True, help="Test data CSV file path with text and label columns"
+        "--test-data",
+        type=str,
+        required=True,
+        help="Test data CSV file path with text and label columns",
     )
     evaluate_parser.add_argument("--output", type=str, help="Output file path for evaluation results (JSON)")
     evaluate_parser.add_argument("--config", type=str, help="Configuration file path (YAML)")
@@ -534,7 +555,10 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     ab_setup_parser.add_argument("--model-b", type=str, required=True, help="Model B (format: name:version)")
     ab_setup_parser.add_argument("--test-data", type=str, required=True, help="Test data CSV file path")
     ab_setup_parser.add_argument(
-        "--traffic-split", type=str, required=True, help="Traffic split percentage for model A (0-100)"
+        "--traffic-split",
+        type=str,
+        required=True,
+        help="Traffic split percentage for model A (0-100)",
     )
     ab_setup_parser.add_argument("--test-name", type=str, required=True, help="Name of the A/B test")
     ab_setup_parser.add_argument("--config", type=str, help="Configuration file path (YAML)")
@@ -548,7 +572,10 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     monitor_parser = subparsers.add_parser("monitor-performance", help="Monitor model performance metrics")
     monitor_parser.add_argument("--model-name", type=str, required=True, help="Name of the model to monitor")
     monitor_parser.add_argument(
-        "--time-range", type=str, default="24h", help="Time range for monitoring (e.g., 24h, 7d, 30d)"
+        "--time-range",
+        type=str,
+        default="24h",
+        help="Time range for monitoring (e.g., 24h, 7d, 30d)",
     )
 
     return parser

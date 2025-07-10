@@ -123,7 +123,7 @@ class TestAppSettings:
                     "base_url": "http://file-config:5678",
                     "model": "file-model",
                     "timeout": 120,
-                }
+                },
             }
             yaml.dump(config_data, f)
             config_path = Path(f.name)

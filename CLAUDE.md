@@ -4,7 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Python package called `disinfo-relation-checker` that checks if a given text is related to a topic. This is intended to be used to judge if we should include the text into our disinformation analysis.Uses modern Python tooling with uv for dependency management, nox for automation, ruff for linting/formatting, mypy for type checking, and pytest for testing with coverage.
+A Python package called `disinfo-relation-checker` that checks if a given text is related to a topic. This is intended to be used to judge if we should include the text into our disinformation analysis. Uses modern Python tooling with uv for dependency management, nox for automation, ruff for linting/formatting, mypy for type checking, and pytest for testing with coverage.
+
+## Architecture Overview
+
+The application follows a layered architecture with dependency injection:
+
+### Core Components:
+- **CLI Layer** (`cli.py`): Command-line interface with subcommands for classify, validate, optimize, evaluate, register-model, list-models, ab-test-setup, ab-test-results, and monitor-performance
+- **Settings Layer** (`settings.py`): Pydantic-based configuration with discriminated unions for LLM provider configs
+- **LLM Abstraction** (`llm_factory.py`, `llm_providers.py`): Factory pattern for pluggable LLM providers (Mock, Ollama, extensible for others)
+- **Classification Engine** (`classifier.py`): Core text classification with configurable prompt templates
+- **Data Processing** (`csv_processor.py`): CSV input/output handling with structured data models
+- **Optimization Engine** (`prompt_optimizer.py`, `optimization_strategies.py`): Genetic algorithm-based prompt optimization
+- **Model Management** (`model_registry.py`): Model versioning and metadata storage
+- **Monitoring** (`performance_monitoring.py`): Performance tracking and alerting
+- **A/B Testing** (`ab_testing.py`): Model comparison framework
+- **Training Data** (`training_data.py`): Dataset management and validation
+
+### Key Design Patterns:
+- **Factory Pattern**: LLM provider creation based on configuration
+- **Strategy Pattern**: Pluggable optimization strategies
+- **Dependency Injection**: All components accept dependencies through constructors
+- **Pydantic Models**: Type-safe data validation throughout the system
 
 ## Development Commands
 
@@ -17,9 +39,23 @@ Primary development workflow uses nox:
 Direct tool usage:
 - `uv run pytest --cov=disinfo_relation_checker --cov-report=term-missing` - Run tests with coverage
 - `uv run pytest tests/test_specific.py` - Run specific test file
+- `uv run pytest -m e2e` - Run end-to-end tests only
+- `uv run pytest -m "not e2e"` - Run unit tests only
 - `uv run ruff check .` - Lint code
 - `uv run ruff format .` - Format code
 - `uv run mypy --strict src/disinfo_relation_checker tests` - Type check with strict settings
+
+## Test Strategy
+
+### Test Structure:
+- **Unit Tests**: Individual component testing with mocked dependencies
+- **E2E Tests**: End-to-end CLI testing (marked with `@pytest.mark.e2e`)
+- **Integration Tests**: Component interaction testing
+
+### Test Configuration:
+- Tests are run with strict warning treatment (`filterwarnings = ["error"]`)
+- Coverage reporting excludes test files and focuses on source code
+- Pytest markers distinguish between unit and e2e tests
 
 ## Development Philosophy
 
@@ -35,7 +71,17 @@ Follow Test-Driven Development (TDD) practices with Outside-In approach:
    - Mock unimplemented dependencies
 5. **Run unit tests only**: `uv run pytest -m "not e2e"` to focus on unit test failures
 6. **Implement module**: Write minimal code to make unit tests pass, following the SOLID design enforced by tests. After each implementation, run the nox command `uv run nox` to check if the tests, linting, formatting and type checking pass.
-7. **Repeat**: Continue until E2E tests pass
+7. **Refactor**: Clean up the code while keeping all tests passing
+   - Remove duplication
+   - Improve naming and structure
+   - Extract common patterns
+   - Run `uv run nox` after each refactoring to ensure tests still pass
+8. **Repeat**: Continue until E2E tests pass
+9. **Final refactor**: Once E2E tests pass, perform final refactoring across the entire feature
+   - Review the complete implementation for code quality
+   - Extract shared utilities and patterns
+   - Ensure consistent architecture across modules
+   - Run `uv run nox` to verify all tests, linting, formatting and type checking still pass
 
 ### Design Principles:
 - **SOLID principles**: Design tests to enforce Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion from the beginning
@@ -43,6 +89,11 @@ Follow Test-Driven Development (TDD) practices with Outside-In approach:
 - **Dependency Injection**: Structure tests to require dependency injection for better testability
 - **Mocking**: Mock external dependencies and unimplemented modules using pytest-mock during development
 - **Pydantic for Data Models**: Use Pydantic BaseModel instead of dataclasses for all data structures to ensure runtime validation, automatic serialization/deserialization, and better type safety
+- **Code Quality Standards**: Follow ruff linting rules strictly without ignoring them unless absolutely necessary
+  - Prefer refactoring code to meet linting standards rather than adding ignore directives
+  - Only ignore linting rules when there is a legitimate technical reason that cannot be resolved through refactoring
+  - When ignoring rules, add detailed comments explaining why the ignore is necessary
+  - Regularly review and remove unnecessary ignore directives during refactoring phases
 
 ## Development Plan
 
@@ -177,6 +228,37 @@ disinfo-relation-checker classify --config config.yaml --input file.csv --output
 
 # Use environment variables
 LLM_PROVIDER_TYPE=ollama disinfo-relation-checker validate --labeled-data labeled.csv
+```
+
+## CLI Usage Examples
+
+### Basic Classification:
+```bash
+# Classify texts in CSV file
+disinfo-relation-checker classify --input data.csv --output results.csv
+
+# Validate model on labeled data
+disinfo-relation-checker validate --labeled-data labeled.csv --config config.yaml
+```
+
+### Advanced Features:
+```bash
+# Optimize prompts with genetic algorithm
+disinfo-relation-checker optimize --training-data train.csv --target-accuracy 0.9 --max-iterations 20 --output optimized.json
+
+# Evaluate specific model configuration
+disinfo-relation-checker evaluate --model-config model.json --test-data test.csv --output evaluation.json
+
+# Model registry operations
+disinfo-relation-checker register-model --model-config model.json --model-name "classifier-v1" --version "1.0.0" --description "Initial classifier"
+disinfo-relation-checker list-models
+
+# A/B testing
+disinfo-relation-checker ab-test-setup --model-a "classifier-v1:1.0.0" --model-b "classifier-v2:1.0.0" --test-data test.csv --traffic-split 50 --test-name "v1-vs-v2"
+disinfo-relation-checker ab-test-results --test-name "v1-vs-v2"
+
+# Performance monitoring
+disinfo-relation-checker monitor-performance --model-name "classifier-v1" --time-range "7d"
 ```
 
 ### Implementation Requirements:

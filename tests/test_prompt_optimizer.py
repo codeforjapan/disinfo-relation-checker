@@ -131,7 +131,11 @@ class TestPromptOptimizer:
 
         mock_strategy = Mock()
         mock_strategy.optimize.return_value = PromptCandidate(
-            template="Best Template: {text}", accuracy=0.95, precision=0.95, recall=0.95, f1=0.95
+            template="Best Template: {text}",
+            accuracy=0.95,
+            precision=0.95,
+            recall=0.95,
+            f1=0.95,
         )
 
         mock_metrics = Mock()
@@ -165,7 +169,11 @@ class TestPromptOptimizer:
 
         mock_strategy = Mock()
         mock_strategy.optimize.return_value = PromptCandidate(
-            template="Template: {text}", accuracy=0.8, precision=0.8, recall=0.8, f1=0.8
+            template="Template: {text}",
+            accuracy=0.8,
+            precision=0.8,
+            recall=0.8,
+            f1=0.8,
         )
 
         mock_metrics = Mock()

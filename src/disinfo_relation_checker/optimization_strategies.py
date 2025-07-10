@@ -2,10 +2,19 @@
 
 import random
 from abc import ABC, abstractmethod
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, TypedDict, Unpack
 
 from .prompt_optimizer import PromptCandidate, PromptGenerator
+
+if TYPE_CHECKING:
+    from .prompt_optimizer import PromptEvaluatorProtocol
+
+
+class OptimizationParams(TypedDict, total=False):
+    """Parameters for optimization strategies."""
+
+    max_generations: int
+    max_iterations: int
 
 
 class OptimizationStrategy(ABC):
@@ -15,10 +24,10 @@ class OptimizationStrategy(ABC):
     def optimize(
         self,
         initial_templates: list[str],
-        training_data: list[dict[str, Any]],
-        evaluator: Callable[[str, list[dict[str, Any]]], PromptCandidate],
+        training_data: list[dict[str, str]],
+        evaluator: "PromptEvaluatorProtocol",
         prompt_generator: PromptGenerator,
-        **kwargs: Any,
+        **kwargs: Unpack[OptimizationParams],
     ) -> PromptCandidate:
         """Optimize prompts using specific strategy."""
         raise NotImplementedError
@@ -28,7 +37,11 @@ class GeneticOptimizationStrategy(OptimizationStrategy):
     """Genetic algorithm optimization strategy."""
 
     def __init__(
-        self, population_size: int = 10, mutation_rate: float = 0.1, crossover_rate: float = 0.8, random_seed: int = 42
+        self,
+        population_size: int = 10,
+        mutation_rate: float = 0.1,
+        crossover_rate: float = 0.8,
+        random_seed: int = 42,
     ) -> None:
         """Initialize genetic optimization strategy."""
         self._population_size = population_size
@@ -40,13 +53,14 @@ class GeneticOptimizationStrategy(OptimizationStrategy):
     def optimize(
         self,
         initial_templates: list[str],
-        training_data: list[dict[str, Any]],
-        evaluator: Callable[[str, list[dict[str, Any]]], PromptCandidate],
+        training_data: list[dict[str, str]],
+        evaluator: "PromptEvaluatorProtocol",
         prompt_generator: PromptGenerator,
-        max_generations: int = 5,
-        **kwargs: Any,
+        **kwargs: Unpack[OptimizationParams],
     ) -> PromptCandidate:
         """Optimize using genetic algorithm."""
+        max_generations = kwargs.get("max_generations", 5)
+
         # Generate initial population
         population = self._generate_initial_population(initial_templates, prompt_generator, training_data, evaluator)
 
@@ -94,8 +108,8 @@ class GeneticOptimizationStrategy(OptimizationStrategy):
         self,
         initial_templates: list[str],
         prompt_generator: PromptGenerator,
-        training_data: list[dict[str, Any]],
-        evaluator: Callable[[str, list[dict[str, Any]]], PromptCandidate],
+        training_data: list[dict[str, str]],
+        evaluator: "PromptEvaluatorProtocol",
     ) -> list[PromptCandidate]:
         """Generate initial population of prompt candidates."""
         templates = set()
@@ -232,13 +246,14 @@ class IterativeOptimizationStrategy(OptimizationStrategy):
     def optimize(
         self,
         initial_templates: list[str],
-        training_data: list[dict[str, Any]],
-        evaluator: Callable[[str, list[dict[str, Any]]], PromptCandidate],
+        training_data: list[dict[str, str]],
+        evaluator: "PromptEvaluatorProtocol",
         prompt_generator: PromptGenerator,
-        max_iterations: int = 10,
-        **kwargs: Any,
+        **kwargs: Unpack[OptimizationParams],
     ) -> PromptCandidate:
         """Optimize using iterative refinement."""
+        max_iterations = kwargs.get("max_iterations", 10)
+
         # Evaluate initial templates
         candidates = [evaluator(template, training_data) for template in initial_templates]
 
@@ -308,7 +323,8 @@ class IterativeOptimizationStrategy(OptimizationStrategy):
                     "Classify the following text as either related (1) or not related (0) to disinformation:",
                 )
             return template.replace(
-                "classify", "classify the following text as either related (1) or not related (0) to disinformation"
+                "classify",
+                "classify the following text as either related (1) or not related (0) to disinformation",
             )
         if "determine" in template.lower():
             return f"Please {template.lower()}"
