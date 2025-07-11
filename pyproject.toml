@@ -11,6 +11,9 @@ dependencies = []
 license = {text = "MIT"}
 dynamic = ["version"]
 
+[project.scripts]
+disinfo-relation-checker = "disinfo_relation_checker.cli:main"
+
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/disinfo_relation_checker"]
@@ -46,6 +49,9 @@ line-ending = "auto"
 "__init__.py" = []
 "tests/*" = [
     "S101",
+]
+"tests/test_cli_e2e.py" = [
+    "S603",
 ]
 
 [tool.mypy]

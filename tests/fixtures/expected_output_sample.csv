@@ -1,0 +1,3 @@
+text,source,classification,confidence
+"This is a test article about politics","news_site","relevant",0.8
+"Another text about technology","tech_blog","not_relevant",0.2
